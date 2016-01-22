@@ -1,0 +1,188 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Sugar by comsechq</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-light.css">
+    <meta name="viewport" content="width=device-width">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Sugar</h1>
+        <p>Syntactic sugar for .NET</p>
+
+        <p class="view"><a href="https://github.com/comsechq/sugar">View the Project on GitHub <small>comsechq/sugar</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/comsechq/sugar/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/comsechq/sugar/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/comsechq/sugar">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h1>
+<a id="syntactic-sugar-for-net" class="anchor" href="#syntactic-sugar-for-net" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Syntactic Sugar for .NET</h1>
+
+<p>A collection of .NET helper classes, extension methods and shortcuts for common .NET operations.</p>
+
+<p>The project is divided in several class libraries:</p>
+
+<ul>
+<li>Sugar: Core of the nice to have helpers and extensions methods.</li>
+<li>Sugar.Html: <a href="https://github.com/jamietre/CsQuery">CsQuery</a> extension methods to help you parse HTML.</li>
+<li>Sugar.Http: Helper classes and interface to leverage .NET's HttpClient.</li>
+<li>Sugar.Test: Unit tests (nunit + moq)</li>
+<li>Sugar.Test.Integration: Integration test</li>
+<li>Sugar.Web: Handy helpers when dealing with domain names and URLs.</li>
+</ul>
+
+<h2>
+<a id="overview" class="anchor" href="#overview" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Overview</h2>
+
+<p>We started this project internally to centralise the code we kept re-using from project to project. If the bits we add have a dependency we try to put it in its own project / DLL (e.g. Sugar.Http depending on System.Net.Http).</p>
+
+<h3>
+<a id="command" class="anchor" href="#command" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Command</h3>
+
+<p>Check the <code>Sugar.Command</code> namespace out if you're thinking need to create a command line tool. It will help you define different commands and then execute a given command.</p>
+
+<div class="highlight highlight-source-cs"><pre>
+<span class="pl-k">public</span> <span class="pl-k">class</span> <span class="pl-en">ResetEvalDateCommand</span> : <span class="pl-k">BoundCommand</span>&lt;<span class="pl-k">ResetEvalDateCommand</span>.<span class="pl-k">Options</span>&gt; 
+{
+    [Flag(<span class="pl-s"><span class="pl-pds">"</span>reset<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>eval-date<span class="pl-pds">"</span></span>)]
+    <span class="pl-k">public</span> <span class="pl-k">class</span> <span class="pl-en">Options</span>
+    {
+        [Parameter(<span class="pl-s"><span class="pl-pds">"</span>eval-date<span class="pl-pds">"</span></span>, Default = <span class="pl-s"><span class="pl-pds">"</span>2001-01-01<span class="pl-pds">"</span></span>)]
+        <span class="pl-k">public</span> DateTime <span class="pl-en">Since</span> { <span class="pl-k">get</span>; <span class="pl-k">set</span>; }
+    }
+
+    <span class="pl-k">public</span> <span class="pl-k">override</span> <span class="pl-k">int</span> <span class="pl-en">Execute</span>(<span class="pl-k">Options</span> <span class="pl-smi">options</span>)
+    {
+        <span class="pl-k">var</span> exitCode = (<span class="pl-k">int</span>) ExitCode.Success;
+
+        <span class="pl-c">// TODO: Implement your command here</span>
+
+        <span class="pl-k">return</span> exitCode;
+    }
+}
+
+<span class="pl-k">public</span> <span class="pl-k">class</span> <span class="pl-en">MyConsole</span> : <span class="pl-k">BaseConsole</span>
+{
+    <span class="pl-k">protected</span> <span class="pl-k">override</span> <span class="pl-k">int</span> <span class="pl-en">Main</span>()
+    {
+        <span class="pl-k">var</span> exitCode = Arguments.Count &gt; <span class="pl-c1">0</span> ? Run(Arguments) : Default();
+
+        <span class="pl-k">return</span> exitCode;
+    }
+
+    <span class="pl-k">public</span> <span class="pl-k">int</span> <span class="pl-en">Run</span>(<span class="pl-k">Arguments</span> <span class="pl-smi">arguments</span>)
+    {
+        <span class="pl-k">var</span> exitCode = (<span class="pl-k">int</span>)ExitCode.GeneralError;
+
+            <span class="pl-k">var</span> commandType = <span class="pl-k">new</span> BoundCommandFactory().GetCommandType(parameters, () =&gt; GetType().Assembly.GetTypes()
+                                                                                                  .Where(type =&gt; type.Namespace != <span class="pl-c1">null</span> &amp;&amp; type.Namespace.StartsWith(<span class="pl-s"><span class="pl-pds">"</span>My.Namespace.Commands<span class="pl-pds">"</span></span>))
+                                                                                                  .Where(type =&gt; type.Name == <span class="pl-s"><span class="pl-pds">"</span>Options<span class="pl-pds">"</span></span>));
+
+            <span class="pl-k">if</span> (commandType != <span class="pl-c1">null</span>)
+            {
+                exitCode = Run(commandType, parameters);
+            }
+            <span class="pl-k">else</span>
+            {
+                System.Console.WriteLine(<span class="pl-s"><span class="pl-pds">"</span>Unknown command arguments: {0}<span class="pl-pds">"</span></span>, Arguments);
+            }
+
+            <span class="pl-k">return</span> exitCode;
+    }
+
+    <span class="pl-k">public</span> <span class="pl-k">int</span> <span class="pl-en">Default</span>()
+    {
+        Console.WriteLine(<span class="pl-s"><span class="pl-pds">"</span>Default output / help message<span class="pl-pds">"</span></span>);
+
+        <span class="pl-k">return</span> (<span class="pl-k">int</span>) ExitCode.Nocommand;
+    }
+}
+
+<span class="pl-k">public</span> <span class="pl-k">static</span> <span class="pl-k">class</span> <span class="pl-en">EntryPoint</span>
+{
+    <span class="pl-k">public</span> <span class="pl-k">static</span> <span class="pl-k">void</span> <span class="pl-en">Main</span>(<span class="pl-k">string[]</span> <span class="pl-smi">args</span>)
+    {
+        <span class="pl-k">var</span> console = <span class="pl-k">new</span> MyConsole();
+
+        <span class="pl-k">var</span> exitCode = console.Run(args);
+
+        Environment.Exit(exitCode);
+    }
+}
+</pre></div>
+
+<h3>
+<a id="extensions" class="anchor" href="#extensions" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Extensions</h3>
+
+<p>A major part of this project consists in (mostly) chainable extension methods. They live in the namespace <code>Sugar.Extensions</code>.</p>
+
+<p>The most usefull extensions methods are probably the string ones such as <code>.StartsWith()</code> or <code>.SubstringAfterChar()</code>. We've also created .Humanise() extensions methods for datetimes and timespans.</p>
+
+<h3>
+<a id="countrycode" class="anchor" href="#countrycode" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>CountryCode</h3>
+
+<p>Enumeration listing all countries on Earth (ISO 3166-1-alpha-2 code elements).</p>
+
+<h3>
+<a id="file-service" class="anchor" href="#file-service" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>File Service</h3>
+
+<p>Wraps System.IO.File behind an interface to ease unit testing.</p>
+
+<h3>
+<a id="geolocation" class="anchor" href="#geolocation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>GeoLocation</h3>
+
+<p>Represents a point on the surface of a sphere approximating the Earth. It contains a few methods that will compute (approximatively) the distance between two points on earth as well a give you a bouding box containing for a given radius around a point.</p>
+
+<p>If you need precision and or performance, use a specialed library!</p>
+
+<h3>
+<a id="htmlbuilder" class="anchor" href="#htmlbuilder" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>HtmlBuilder</h3>
+
+<p><code>IBuilder</code> implementation to help generating HTML fragments.</p>
+
+<h3>
+<a id="http-service" class="anchor" href="#http-service" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Http Service</h3>
+
+<p>This service and its interface live in the <code>Sugar.Web</code> project. It wraps calls to .NET's HttpWebResponse with an interface that is easily mockable in a unit test.</p>
+
+<p>We wrote this class before HttpClient was introduced in .NET 4.0 and are considering this project near it's end of life.</p>
+
+<h3>
+<a id="retry" class="anchor" href="#retry" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Retry</h3>
+
+<p>Helper class to retry a given action <code>x</code> times. If you need more flexibility checkout <a href="https://github.com/App-vNext/Polly">Polly</a>.</p>
+
+<h3>
+<a id="texttable" class="anchor" href="#texttable" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>TextTable</h3>
+
+<p>Helper class to ouput text as a table in a console application</p>
+
+<h2>
+<a id="license" class="anchor" href="#license" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>License</h2>
+
+<p>This project is licensed under the terms of the <a href="https://github.com/comsechq/sugar/blob/master/LICENSE.txt">MIT license</a>. </p>
+
+<p>By submitting a pull request for this project, you agree to license your contribution under the MIT license to this project.</p>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/comsechq">comsechq</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
